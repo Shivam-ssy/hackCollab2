@@ -1,99 +1,139 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/useAuth';
-import { AlertCircle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-
-export default function LoginPage() {
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import api from "@/lib/api";
+import { LoginFormData, loginSchema } from "@/lib/authSchema";
+import { log } from "console";
+function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
   const router = useRouter();
-  const { login, isLoading, error } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(email, password);
-      router.push('/dashboard');
-    } catch (err) {
-      console.error('Login error:', err);
+      setIsLoading(true);
+      setServerError("");
+
+      const res = await api.post("/users/users/login", data);
+      console.log(res.data);
+      
+      const token = res?.data?.token;
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+
+      router.push("/");
+    } catch (error) {
+      console.error(error);
+
+      if (error.response) {
+        setServerError(
+          error.response.data?.message || "Invalid email or password"
+        );
+      } else if (error.request) {
+        setServerError("Server not responding. Try again.");
+      } else {
+        setServerError("Something went wrong.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <div className="p-8">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary mb-2">HackHub</h1>
-            <p className="text-muted-foreground">Hackathon Management Platform</p>
-          </div>
+    <div className="mesh-bg min-h-screen flex items-center justify-center bg-[var(--background)] px-6">
+      <div className="w-full max-w-md bg-[var(--card)] border border-[var(--border)] p-8 rounded-2xl shadow-xl backdrop-blur-sm animate-fade-up">
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex gap-3 items-start">
-              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-destructive">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
-            <p className="text-sm font-medium mb-2">Demo Credentials:</p>
-            <p className="text-xs text-muted-foreground mb-1">Email: demo@example.com</p>
-            <p className="text-xs text-muted-foreground">Password: demo123</p>
-          </div>
-
-          {/* Signup Link */}
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-primary hover:underline font-medium">
-              Sign up
-            </Link>
+        <div className="text-center mb-8">
+          <h2 className="font-display text-3xl font-extrabold text-[var(--foreground)] tracking-tight">
+            Welcome Back
+          </h2>
+          <p className="text-[var(--muted-foreground)] mt-2 font-body">
+            Enter your credentials to access your account.
           </p>
         </div>
-      </Card>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+          {/* Server Error */}
+          {serverError && (
+            <p className="text-sm text-red-500 text-center">{serverError}</p>
+          )}
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-1.5 ml-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="name@company.com"
+              {...register("email")}
+              className="w-full px-4 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] focus:ring-2 focus:ring-[oklch(0.55_0.22_278)] outline-none transition-all placeholder:text-[var(--muted-foreground)]"
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500 mt-1 ml-1">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-1.5 ml-1">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              {...register("password")}
+              className="w-full px-4 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] focus:ring-2 focus:ring-[oklch(0.55_0.22_278)] outline-none transition-all placeholder:text-[var(--muted-foreground)]"
+            />
+            {errors.password && (
+              <p className="text-xs text-red-500 mt-1 ml-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 bg-[oklch(0.55_0.22_278)] hover:bg-[oklch(0.48_0.22_278)] text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              "Sign In"
+            )}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-[var(--muted-foreground)] mt-6 font-body">
+          Don't have an account?{" "}
+          <Link
+            href="/register"
+            className="text-[oklch(0.55_0.22_278)] hover:underline font-semibold"
+          >
+            Create account
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
+
+export default LoginPage;

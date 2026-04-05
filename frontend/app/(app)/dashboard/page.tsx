@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import { useAuth } from '@/hooks/useAuth';
 import { AdminDashboard } from '@/components/dashboards/admin-dashboard';
 import { StudentDashboard } from '@/components/dashboards/student-dashboard';

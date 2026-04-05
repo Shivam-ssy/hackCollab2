@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from '@/components/providers'
@@ -11,13 +11,6 @@ export const metadata: Metadata = {
   title: 'HackHub - Hackathon Management Platform',
   description: 'Comprehensive hackathon management platform with role-based dashboards for admins, colleges, students, companies, judges, and volunteers',
   generator: 'v0.app',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    themeColor: '#7c3aed',
-  },
   icons: {
     icon: [
       {
@@ -37,14 +30,23 @@ export const metadata: Metadata = {
   },
 }
 
+// ✅ Move here
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#7c3aed',
+};
+
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased dark bg-background text-foreground">
+      <body className="font-sans antialiased  bg-background text-foreground">
         <Providers>
           {children}
         </Providers>
