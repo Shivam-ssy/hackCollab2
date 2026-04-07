@@ -44,7 +44,10 @@ import collegeRouter from "./routes/college.route.js";
 import teamRouter from "./routes/team.route.js";
 import teamInviteRouter from "./routes/team.invite.route.js";
 import teamMemberRouter from "./routes/team.member.route.js";
+import dashboardRouter from "./routes/dashboard.route.js";
+import hackathonRouter from "./routes/hackthon.route.js";
 
+app.use("/api/v1/hackathons", hackathonRouter);
 app.use("/api/v1/users", userRouter);
 
 app.use("/api/v1/college", collegeRouter);
@@ -54,6 +57,10 @@ app.use("/api/v1/team", teamRouter);
 app.use("/api/v1/team/invite", teamInviteRouter);
 
 app.use("/api/v1/team/member", teamMemberRouter);// Error handling middleware
+
+app.use("/api/v1/dashboard", dashboardRouter);
+
+app.use('/api/v1/hackthons',hackathonRouter)
 app.use(errorHandler)
 
 export default app;

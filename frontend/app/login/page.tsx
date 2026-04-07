@@ -5,14 +5,15 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import apis from "@/lib/api";
 import { LoginFormData, loginSchema } from "@/lib/authSchema";
 import { log } from "console";
+import { useAuth } from "@/hooks/useAuth";
 function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const router = useRouter();
-
+  const { login } = useAuth();
   const {
     register,
     handleSubmit,
@@ -26,15 +27,16 @@ function LoginPage() {
       setIsLoading(true);
       setServerError("");
 
-      const res = await api.post("/users/users/login", data);
-      console.log(res.data);
-      
-      const token = res?.data?.token;
-      if (token) {
-        localStorage.setItem("token", token);
-      }
+      const res = await apis.post("/users/users/login", data);
+      login(res.data.data.user); // Update auth context with user data
+      // console.log(res.data);
 
-      router.push("/");
+      // const token = res?.data?.token;
+      // if (token) {
+      //   localStorage.setItem("token", token);
+      // }
+
+      router.push("/dashboard");
     } catch (error) {
       console.error(error);
 

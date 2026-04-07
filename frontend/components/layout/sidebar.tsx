@@ -1,8 +1,13 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
 import {
   LayoutDashboard,
   Users,
@@ -13,110 +18,168 @@ import {
   LogOut,
   Menu,
   X,
-} from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
-import { useState } from 'react';
+} from "lucide-react";
 
-const MENU_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
-  { icon: Users, label: 'Users', href: '/users' },
-  { icon: Trophy, label: 'Hackathons', href: '/hackathons' },
-  { icon: Zap, label: 'Projects', href: '/projects' },
-  { icon: Users, label: 'Teams', href: '/teams' },
-  { icon: Users, label: 'Profile', href: '/profile' },
-  { icon: MessageSquare, label: 'Messages', href: '/messages' },
-  { icon: Settings, label: 'Settings', href: '/settings' },
+const MAIN_MENU = [
+  { icon: LayoutDashboard, label: "Dashboard", to: "/dashboard" },
+  { icon: Trophy, label: "Hackathons", to: "/hackathons" },
+  { icon: Zap, label: "Projects", to: "/projects" },
+  { icon: Users, label: "Teams", to: "/teams" },
+];
+
+const ACCOUNT_MENU = [
+  { icon: Users, label: "Users", to: "/users" },
+  { icon: MessageSquare, label: "Messages", to: "/messages" },
+  { icon: Settings, label: "Settings", to: "/settings" },
+  { icon: Users, label: "Profile", to: "/profile" },
 ];
 
 export function Sidebar() {
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    router.push("/login");
   };
+
+  const getRoleText = () => {
+    if (!user) return "";
+
+    if (Array.isArray(user.roles)) {
+      return user.roles
+        .map((r) =>
+          typeof r === "string" ? r : r?.name || null
+        )
+        .filter(Boolean)
+        .map((r) => r.replace(/_/g, " "))
+        .join(", ");
+    }
+
+    if (typeof user.role === "string") {
+      return user.role.replace(/_/g, " ");
+    }
+
+    return "No Role";
+  };
+
+  const renderMenu = (items: any[]) =>
+    items.map((item) => {
+      const Icon = item.icon;
+      const isActive = pathname === item.to;
+
+      return (
+        <Link key={item.to} href={item.to}>
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full justify-start gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              "text-gray-700 dark:text-gray-300",
+              "hover:bg-gray-100 dark:hover:bg-gray-800",
+              isActive &&
+                "bg-blue-500 text-white shadow-lg hover:bg-blue-600"
+            )}
+          >
+            <Icon size={18} />
+            {item.label}
+          </Button>
+        </Link>
+      );
+    });
 
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Mobile Toggle */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-40 rounded-lg p-2 md:hidden bg-sidebar hover:bg-sidebar-accent text-sidebar-foreground"
+        className="fixed top-4 left-4 z-40 md:hidden p-2 rounded-lg bg-gray-200 dark:bg-gray-800"
       >
-        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 md:relative md:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          "fixed inset-y-0 left-0 z-30 w-64 transition-all duration-300 md:relative md:translate-x-0",
+          "bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl",
+          "border-r border-gray-200 dark:border-gray-700",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex flex-col h-full pt-20 md:pt-0">
+        <div className="flex flex-col h-full">
+
           {/* Logo */}
-          <div className="px-6 py-6 border-b border-sidebar-border">
-            <h1 className="text-2xl font-bold text-sidebar-primary">HackHub</h1>
-            <p className="text-sm text-sidebar-foreground opacity-70 mt-1">Management</p>
+          <div className="px-6 py-6 border-b border-gray-200 dark:border-gray-700">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              HackCollab
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Management Platform
+            </p>
           </div>
 
           {/* User Info */}
           {user && (
-            <div className="px-6 py-4 border-b border-sidebar-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-semibold">
-                  {user.name.charAt(0).toUpperCase()}
+            <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <div className="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center font-semibold">
+                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">{user.name}</p>
-                  <p className="text-xs opacity-70 truncate">{user.role.replace(/_/g, ' ')}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate text-gray-900 dark:text-white">
+                    {user?.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {getRoleText()}
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {MENU_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  >
-                    <Icon size={20} />
-                    <span>{item.label}</span>
-                  </Button>
-                </Link>
-              );
-            })}
+          <nav className="flex-1 px-4 py-6 space-y-6">
+
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase px-2 mb-2">
+                Main
+              </p>
+              <div className="space-y-1">{renderMenu(MAIN_MENU)}</div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase px-2 mb-2">
+                Account
+              </p>
+              <div className="space-y-1">{renderMenu(ACCOUNT_MENU)}</div>
+            </div>
+
           </nav>
 
           {/* Logout */}
-          <div className="px-4 py-6 border-t border-sidebar-border">
+          <div className="px-4 py-6 border-t border-gray-200 dark:border-gray-700">
             <Button
               onClick={handleLogout}
               variant="ghost"
-              className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
+              className="w-full justify-start gap-3 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 transition"
             >
-              <LogOut size={20} />
-              <span>Logout</span>
+              <LogOut size={18} />
+              Logout
             </Button>
           </div>
         </div>
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 md:hidden"
-          onClick={() => toggleSidebar()}
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={toggleSidebar}
         />
       )}
     </>

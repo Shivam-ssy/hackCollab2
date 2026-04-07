@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createUser, forgetPassword, getCurrentUser, login, logout, resetPassword, sendOtp, verifyEmail, verifyOtp, updateProfile } from "../controllers/user.controller.js";
+import { createUser, forgetPassword, getCurrentUser, login, logout, resetPassword, sendOtp, verifyEmail, verifyOtp, updateProfile, refreshAccessToken } from "../controllers/user.controller.js";
 import verifyAuth from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -443,5 +443,5 @@ router.post('/users/reset-password/verify-otp', resetPassword);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/users/logout', verifyAuth, logout);
-
+router.post('/users/refresh-token', refreshAccessToken);
 export default router;

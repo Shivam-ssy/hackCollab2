@@ -8,9 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'HackHub - Hackathon Management Platform',
+  title: 'HackCollab - Hackathon Management Platform',
   description: 'Comprehensive hackathon management platform with role-based dashboards for admins, colleges, students, companies, judges, and volunteers',
-  generator: 'v0.app',
   icons: {
     icon: [
       {

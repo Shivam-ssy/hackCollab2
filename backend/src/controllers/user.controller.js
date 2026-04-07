@@ -30,6 +30,7 @@ import { sendEmail } from "../helpers/sendEmail.js";
 import { logger } from "../loggers/logger.js";
 import { sendOtpService, verifyOtpService } from "../services/otp.services.js";
 import Role from "../models/role.model.js";
+import jwt from "jsonwebtoken";
 
 
 
@@ -319,4 +320,51 @@ export const logout = asyncHandler(async (req, res, next) => {
     .cookie("accessToken", null, { ...options, maxAge: 0 })
     .cookie("refreshToken", null, { ...options, maxAge: 0 })
     .json(new ApiResponse(200, null, "Logout successful"));
+});
+export const refreshAccessToken = asyncHandler(async (req, res, next) => {
+  // 1. Get refresh token from cookies
+  const incomingRefreshToken = req.cookies?.refreshToken;
+
+  if (!incomingRefreshToken) {
+    return next(new ApiError(401, "Unauthorized request"));
+  }
+
+  try {
+    // 2. Verify refresh token
+    const decoded = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    // 3. Find user
+    const user = await User.findById(decoded?._id);
+
+    if (!user) {
+      return next(new ApiError(401, "Invalid refresh token"));
+    }
+
+    // 4. Match with DB token (VERY IMPORTANT 🔥)
+    if (incomingRefreshToken !== user.refreshToken) {
+      return next(new ApiError(401, "Refresh token is expired or used"));
+    }
+
+    // 5. Generate new tokens (rotation)
+    const { accessToken, refreshToken } =
+      await generateAccessAndRefreshToken(user._id);
+
+    // 6. Send new cookies
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken },
+          "Access token refreshed"
+        )
+      );
+  } catch (error) {
+    return next(new ApiError(401, "Invalid or expired refresh token"));
+  }
 });

@@ -15,14 +15,20 @@ const TeamSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🔥 Leader (single source of truth)
+    // 🔥 tenant isolation
+    college: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
     leader: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    // ✅ Members (INCLUDING leader)
     members: [
       {
         user: {
@@ -42,7 +48,6 @@ const TeamSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔥 Pending join requests
     pendingRequests: [
       {
         user: {
@@ -56,7 +61,6 @@ const TeamSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔥 Invited users
     invitedUsers: [
       {
         user: {
@@ -70,47 +74,21 @@ const TeamSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔥 Team visibility
     isPrivate: {
       type: Boolean,
       default: false,
     },
-
-    // 🧠 Project Info
-    projectTitle: String,
-    projectDescription: String,
-    githubRepo: String,
-    demoLink: String,
-
-    // 📤 Submission
-    submissionFile: String,
-    submittedAt: Date,
-
-    submissionStatus: {
-      type: String,
-      enum: ["not_submitted", "submitted"],
-      default: "not_submitted",
-    },
-
-    // 🏆 Approval / Review
-    approvalStatus: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-    },
-
-    score: {
-      type: Number,
-      default: 0,
-    },
   },
   { timestamps: true }
 );
+
+// unique team per hackathon
 TeamSchema.index({ name: 1, hackathon: 1 }, { unique: true });
 
-// Prevent duplicate members
+// prevent same user in multiple teams in same hackathon
 TeamSchema.index(
   { hackathon: 1, "members.user": 1 },
   { unique: true, sparse: true }
 );
+
 export default mongoose.model("Team", TeamSchema);

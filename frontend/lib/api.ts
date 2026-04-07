@@ -1,40 +1,63 @@
-
 import axios from "axios";
 
 const apis = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   withCredentials: true,
 });
-// for refresh the token 
-apis.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error) => {
-    const originalRequest = error.config;
 
-    // If token expired
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+// Define the maximum number of retries
+const MAX_RETRIES = 3;
 
-      try {
-        const res = await axios.post("/auth/refresh"); // your refresh API
-        const newToken = res.data.token;
+// apis.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     const originalRequest = error.config;
 
-        // localStorage.setItem("token", newToken);
+//     // Initialize retry count if it doesn't exist
+//     if (originalRequest._retryCount === undefined) {
+//       originalRequest._retryCount = 0;
+//     }
 
-        // // update header
-        // originalRequest.headers.Authorization = `Bearer ${newToken}`;
+//     // 🔥 Check: 401 Error AND under the retry limit
+//     if (
+//       error.response?.status === 401 && 
+//       originalRequest._retryCount < MAX_RETRIES
+//     ) {
+      
+//       // Stop if the refresh endpoint itself is what's failing
+//       if (originalRequest.url === "/users/users/refresh-token") {
+//         return Promise.reject(error);
+//       }
 
-        return api(originalRequest); // retry request
-      } catch (err) {
-        console.log("Session expired");
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-      }
-    }
+//       // Increment the retry counter
+//       originalRequest._retryCount++;
 
-    return Promise.reject(error);
-  }
-);
+//       try {
+//         // ✅ Attempt to refresh the token
+//         await apis.post("/users/users/refresh-token");
+
+//         // ✅ Retry the original request with the incremented counter
+//         return apis(originalRequest);
+
+//       } catch (err) {
+//         // If refresh fails, don't keep retrying; go to login
+//         if (typeof window !== "undefined") {
+//           window.location.href = "/login";
+//         }
+//         return Promise.reject(err);
+//       }
+//     }
+
+//     // If we've reached the MAX_RETRIES or it's a different error
+//     if (originalRequest._retryCount >= MAX_RETRIES) {
+//       console.error(`Max retries (${MAX_RETRIES}) reached.`);
+//       if (typeof window !== "undefined") {
+//         window.location.href = "/login";
+//       }
+//     }
+
+//     return Promise.reject(error);
+//   }
+// );
+
 export default apis;
